@@ -190,7 +190,7 @@ start_flutter_app() {
     
     # 啟動 Flutter 應用 (啟用熱加載)
     echo -e "${GREEN}啟動 Flutter 應用 (熱加載已啟用)...${NC}"
-    flutter run --hot &
+    flutter run &
     FLUTTER_PID=$!
     
     cd ../..

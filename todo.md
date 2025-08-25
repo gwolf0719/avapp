@@ -31,6 +31,14 @@
 - [x] 修復彈出視窗佈局溢出問題
 - [x] 修復列表圖片被裁切問題（改回 BoxFit.contain）
 - [x] 減少圖片和文字間距（調整圖片區域比例為 6:1，減少文字 padding）
+- [x] 優化圖片佈局（寬度適應 grid，高度根據 16:9 比例自動調整）
+- [x] 修復熱加載問題（移除已棄用的 --hot 參數）
+- [x] 優化卡片高度（讓單一物件高度自動遷就內容）
+- [x] 減少物件間空白間距（調整寬高比和 padding）
+- [x] 實現內容自適應高度（使用 IntrinsicHeight 和 SliverGridDelegateWithMaxCrossAxisExtent）
+- [x] 改用 ListView + Row 佈局實現真正的內容自適應高度
+- [x] 修復 IntrinsicHeight 佈局錯誤（移除 IntrinsicHeight 避免與 Row 衝突）
+- [x] 優化彈出視窗佈局（圖片完整呈現，標題完整顯示，自動適應畫面）
 
 ### Jable.tv 爬蟲 API 專案建構
 - [x] 建立專案基本結構

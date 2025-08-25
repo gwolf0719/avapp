@@ -176,17 +176,12 @@ class _HomePageState extends ConsumerState<HomePage> {
             },
             child: Padding(
               padding: padding,
-              child: GridView.builder(
+              child: ListView.builder(
                 controller: _scrollController,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: columnCount,
-                  crossAxisSpacing: spacing,
-                  mainAxisSpacing: spacing,
-                  childAspectRatio: ResponsiveHelper.getGridItemAspectRatio(context),
-                ),
-                itemCount: videos.length + (hasMore ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == videos.length) {
+                padding: EdgeInsets.zero,
+                itemCount: (videos.length / columnCount).ceil() + (hasMore ? 1 : 0),
+                itemBuilder: (context, rowIndex) {
+                  if (rowIndex == (videos.length / columnCount).ceil()) {
                     // Loading indicator for more items
                     return Container(
                       padding: const EdgeInsets.all(16.0),
@@ -209,13 +204,33 @@ class _HomePageState extends ConsumerState<HomePage> {
                     );
                   }
 
-                  final video = videos[index];
-                  return VideoItemCard(
-                    video: video,
-                    isFocused: _focusedIndex == index,
-                    focusNode: isTV ? _focusManager?.getFocusNode(index) : null,
-                    autofocus: isTV && index == 0,
-                    onTap: () => _onVideoTap(index),
+                  final startIndex = rowIndex * columnCount;
+                  final endIndex = (startIndex + columnCount).clamp(0, videos.length);
+                  final rowVideos = videos.sublist(startIndex, endIndex);
+
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: spacing),
+                    child: Row(
+                      children: [
+                        for (int i = 0; i < columnCount; i++)
+                          Expanded(
+                            child: i < rowVideos.length
+                                ? Padding(
+                                    padding: EdgeInsets.only(
+                                      right: i < columnCount - 1 ? spacing : 0,
+                                    ),
+                                    child: VideoItemCard(
+                                      video: rowVideos[i],
+                                      isFocused: _focusedIndex == startIndex + i,
+                                      focusNode: isTV ? _focusManager?.getFocusNode(startIndex + i) : null,
+                                      autofocus: isTV && startIndex + i == 0,
+                                      onTap: () => _onVideoTap(startIndex + i),
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                      ],
+                    ),
                   );
                 },
               ),

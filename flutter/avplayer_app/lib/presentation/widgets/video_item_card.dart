@@ -122,75 +122,84 @@ class _VideoItemCardState extends State<VideoItemCard>
                 borderRadius: BorderRadius.circular(12.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      flex: 8, // 大幅增加圖片區域的比例
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(12.0),
-                        ),
-                        child: Stack(
-                          children: [
-                            CachedNetworkImage(
-                              imageUrl: widget.video.imageUrl,
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.contain, // 改為 contain 以完整顯示圖片
-                              placeholder: (context, url) => Container(
-                                color: Colors.grey[300],
-                                child: const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                color: Colors.grey[300],
-                                child: const Icon(
-                                  Icons.error,
-                                  color: Colors.grey,
-                                  size: 48.0,
-                                ),
-                              ),
-                            ),
-                            if (widget.video.duration != null)
-                              Positioned(
-                                bottom: 4.0,
-                                right: 4.0,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 4.0,
-                                    vertical: 1.0,
+                    // 圖片區域：寬度適應 grid，高度根據圖片比例
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12.0),
+                      ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          // 使用 16:9 的標準影片比例
+                          const double aspectRatio = 16 / 9;
+                          final double imageHeight = constraints.maxWidth / aspectRatio;
+                          
+                          return SizedBox(
+                            width: constraints.maxWidth,
+                            height: imageHeight,
+                            child: Stack(
+                              children: [
+                                CachedNetworkImage(
+                                  imageUrl: widget.video.imageUrl,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Container(
+                                    color: Colors.grey[300],
+                                    child: const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.7),
-                                    borderRadius: BorderRadius.circular(3.0),
-                                  ),
-                                  child: Text(
-                                    widget.video.duration!,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10.0,
-                                      fontWeight: FontWeight.w500,
+                                  errorWidget: (context, url, error) => Container(
+                                    color: Colors.grey[300],
+                                    child: const Icon(
+                                      Icons.error,
+                                      color: Colors.grey,
+                                      size: 48.0,
                                     ),
                                   ),
                                 ),
-                              ),
-                          ],
-                        ),
+                                if (widget.video.duration != null)
+                                  Positioned(
+                                    bottom: 4.0,
+                                    right: 4.0,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4.0,
+                                        vertical: 1.0,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(alpha: 0.7),
+                                        borderRadius: BorderRadius.circular(3.0),
+                                      ),
+                                      child: Text(
+                                        widget.video.duration!,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10.0,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     ),
-                    Expanded(
-                      flex: 1,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
-                        child: Text(
-                          widget.video.title,
-                          style: TextStyle(
-                            fontSize: isTV ? 14.0 : 12.0,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                    // 標題區域：高度由內容決定
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                      child: Text(
+                        widget.video.title,
+                        style: TextStyle(
+                          fontSize: isTV ? 14.0 : 12.0,
+                          fontWeight: FontWeight.w500,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

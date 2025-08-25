@@ -39,7 +39,7 @@ class _VideoPreviewDialogState extends ConsumerState<VideoPreviewDialog> {
     final dialogWidth = isTV 
         ? screenSize.width * 0.6 
         : (isLandscape ? screenSize.width * 0.7 : screenSize.width * 0.85);
-    final maxDialogHeight = screenSize.height * 0.8; // 減少最大高度
+    final maxDialogHeight = screenSize.height * 0.8;
     
     final videoDetailAsync = ref.watch(cachedVideoDetailProvider(widget.video.videoId));
 
@@ -66,53 +66,62 @@ class _VideoPreviewDialogState extends ConsumerState<VideoPreviewDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 圖片區域
-              Expanded(
-                flex: 3,
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16.0),
-                  ),
-                  child: CachedNetworkImage(
-                    imageUrl: widget.video.imageUrl,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: Colors.grey[800],
-                      child: const Center(
-                        child: CircularProgressIndicator(),
+              // 圖片區域 - 以完整呈現為原則
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  // 使用 16:9 的標準影片比例，但確保圖片完整顯示
+                  const double aspectRatio = 16 / 9;
+                  final double imageHeight = constraints.maxWidth / aspectRatio;
+                  
+                  return SizedBox(
+                    width: constraints.maxWidth,
+                    height: imageHeight,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16.0),
+                      ),
+                      child: CachedNetworkImage(
+                        imageUrl: widget.video.imageUrl,
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.contain, // 改為 contain 以完整顯示圖片
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey[800],
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: Colors.grey[800],
+                          child: const Icon(
+                            Icons.error,
+                            color: Colors.white,
+                            size: 64.0,
+                          ),
+                        ),
                       ),
                     ),
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey[800],
-                      child: const Icon(
-                        Icons.error,
-                        color: Colors.white,
-                        size: 64.0,
-                      ),
-                    ),
-                  ),
-                ),
+                  );
+                },
               ),
               
-              // 標題和按鈕區域
-              Container(
+              // 標題和按鈕區域 - 高度由內容決定
+              Padding(
                 padding: EdgeInsets.all(isTV ? 20.0 : 16.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 標題
+                    // 標題 - 完整顯示，不限制行數
                     Text(
                       widget.video.title,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                      // 移除 maxLines 限制，讓標題完整顯示
                     ),
                     
-                    const SizedBox(height: 12.0),
+                    const SizedBox(height: 16.0),
                     
                     // 按鈕區域
                     Row(

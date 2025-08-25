@@ -27,13 +27,13 @@ class ResponsiveHelper {
   }
 
   static double getGridItemAspectRatio(BuildContext context) {
-    // 調整寬高比，讓圖片區域更大，文字區域更小
+    // 調整寬高比，讓卡片更緊湊，減少空白間距
     if (isTV(context)) {
-      return 0.7; // TV: 較高的比例
+      return 0.8; // TV: 更緊湊的比例
     } else if (isTablet(context)) {
-      return 0.65; // Tablet: 中等比例
+      return 0.75; // Tablet: 更緊湊的比例
     } else {
-      return 0.6; // Mobile: 調整比例，減少間距
+      return 0.7; // Mobile: 更緊湊的比例，減少間距
     }
   }
 
@@ -54,6 +54,16 @@ class ResponsiveHelper {
       return 12.0;
     } else {
       return 8.0;
+    }
+  }
+
+  static double getGridItemMaxWidth(BuildContext context) {
+    if (isTV(context)) {
+      return 200.0; // TV: 較大的卡片
+    } else if (isTablet(context)) {
+      return 180.0; // Tablet: 中等卡片
+    } else {
+      return 160.0; // Mobile: 較小的卡片
     }
   }
 }
