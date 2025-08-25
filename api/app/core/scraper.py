@@ -393,9 +393,16 @@ class JableScraper:
                 'error': str(e)
             }
     
-    async def get_actor_videos(self, actor_url: str) -> Dict[str, Any]:
+    async def get_actor_videos(self, actor_url: str, page: int = 1) -> Dict[str, Any]:
         """獲取演員相關影片"""
         try:
+            # 處理分頁 URL
+            if page > 1:
+                if '?' in actor_url:
+                    actor_url = f"{actor_url}&page={page}"
+                else:
+                    actor_url = f"{actor_url}?page={page}"
+            
             # 先嘗試非同步請求
             content = await self.fetch_page(actor_url)
             # 失敗則同步
@@ -411,6 +418,8 @@ class JableScraper:
                     'actor_name': '',
                     'videos': [],
                     'total_count': 0,
+                    'current_page': page,
+                    'total_pages': 1,
                     'status': 'failed',
                     'error': '無法獲取演員頁面'
                 }
@@ -475,6 +484,8 @@ class JableScraper:
                 'actor_name': actor_name,
                 'videos': videos,
                 'total_count': len(videos),
+                'current_page': page,
+                'total_pages': 1,  # 暫時設為1，可以後續優化
                 'status': 'success'
             }
             
@@ -484,6 +495,8 @@ class JableScraper:
                 'actor_name': '',
                 'videos': [],
                 'total_count': 0,
+                'current_page': page,
+                'total_pages': 1,
                 'status': 'error',
                 'error': str(e)
             }
