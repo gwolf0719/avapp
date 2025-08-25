@@ -215,7 +215,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SafeArea(
+      body: SizedBox.expand(
         child: Focus(
           autofocus: true,
           onKeyEvent: (node, event) {
@@ -227,7 +227,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                   Navigator.of(context).pop();
                   return KeyEventResult.handled;
                 
-                // 播放/暫停控制
+                // 播放/暫停控制（與點擊畫面共通）
                 case LogicalKeyboardKey.select:
                 case LogicalKeyboardKey.enter:
                 case LogicalKeyboardKey.space:
@@ -238,18 +238,18 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                 
                 // 音量控制
                 case LogicalKeyboardKey.arrowUp:
-                  _decreaseVolume();
+                  _increaseVolume();
                   return KeyEventResult.handled;
                 case LogicalKeyboardKey.arrowDown:
-                  _increaseVolume();
+                  _decreaseVolume();
                   return KeyEventResult.handled;
                 
                 // 快進/快退控制
                 case LogicalKeyboardKey.arrowRight:
-                  _seekBackward();
+                  _seekForward();
                   return KeyEventResult.handled;
                 case LogicalKeyboardKey.arrowLeft:
-                  _seekForward();
+                  _seekBackward();
                   return KeyEventResult.handled;
                 
                 // 其他媒體控制
@@ -318,7 +318,26 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                         // Video player - 滿版顯示
                         SizedBox.expand(
                           child: _chewieController != null
-                              ? Chewie(controller: _chewieController!)
+                              ? GestureDetector(
+                                  onTap: _togglePlayPause, // OK鍵動作與點擊畫面共通
+                                  onVerticalDragUpdate: (details) {
+                                    // 上下滑動控制音量
+                                    if (details.delta.dy < -10) {
+                                      _increaseVolume();
+                                    } else if (details.delta.dy > 10) {
+                                      _decreaseVolume();
+                                    }
+                                  },
+                                  onHorizontalDragUpdate: (details) {
+                                    // 左右滑動控制播放進度
+                                    if (details.delta.dx > 10) {
+                                      _seekForward();
+                                    } else if (details.delta.dx < -10) {
+                                      _seekBackward();
+                                    }
+                                  },
+                                  child: Chewie(controller: _chewieController!),
+                                )
                               : const Center(child: CircularProgressIndicator()),
                         ),
                         
@@ -337,38 +356,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                             ),
                           ),
                         
-                        // 音量指示器
-                        Positioned(
-                          top: 16,
-                          right: 16,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.7),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  _volume == 0 ? Icons.volume_off : 
-                                  _volume < 0.5 ? Icons.volume_down : Icons.volume_up,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '${(_volume * 100).round()}%',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+
                         
                         // 暫停時的控制介面
                         if (_isPaused)
