@@ -67,11 +67,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
           allowMuting: true,
           allowPlaybackSpeedChanging: true,
           showControlsOnInitialize: true,
-          onPlayerStateChanged: (playerState) {
-            setState(() {
-              _isPaused = playerState == PlayerState.paused;
-            });
-          },
           errorBuilder: (context, errorMessage) {
             return Center(
               child: Column(

@@ -124,7 +124,7 @@ class _VideoItemCardState extends State<VideoItemCard>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      flex: 3,
+                      flex: 8, // 大幅增加圖片區域的比例
                       child: ClipRRect(
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(12.0),
@@ -135,7 +135,7 @@ class _VideoItemCardState extends State<VideoItemCard>
                               imageUrl: widget.video.imageUrl,
                               width: double.infinity,
                               height: double.infinity,
-                              fit: BoxFit.cover,
+                              fit: BoxFit.contain, // 改為 contain 以完整顯示圖片
                               placeholder: (context, url) => Container(
                                 color: Colors.grey[300],
                                 child: const Center(
@@ -153,22 +153,22 @@ class _VideoItemCardState extends State<VideoItemCard>
                             ),
                             if (widget.video.duration != null)
                               Positioned(
-                                bottom: 8.0,
-                                right: 8.0,
+                                bottom: 4.0,
+                                right: 4.0,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 6.0,
-                                    vertical: 2.0,
+                                    horizontal: 4.0,
+                                    vertical: 1.0,
                                   ),
                                   decoration: BoxDecoration(
                                     color: Colors.black.withValues(alpha: 0.7),
-                                    borderRadius: BorderRadius.circular(4.0),
+                                    borderRadius: BorderRadius.circular(3.0),
                                   ),
                                   child: Text(
                                     widget.video.duration!,
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 12.0,
+                                      fontSize: 10.0,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -181,11 +181,11 @@ class _VideoItemCardState extends State<VideoItemCard>
                     Expanded(
                       flex: 1,
                       child: Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
                         child: Text(
                           widget.video.title,
                           style: TextStyle(
-                            fontSize: isTV ? 14.0 : 13.0,
+                            fontSize: isTV ? 14.0 : 12.0,
                             fontWeight: FontWeight.w500,
                           ),
                           maxLines: 2,

@@ -107,7 +107,7 @@ class JableScraper:
     
     def parse_html(self, html_content: str) -> BeautifulSoup:
         """解析 HTML 內容"""
-        return BeautifulSoup(html_content, 'lxml')
+        return BeautifulSoup(html_content, 'html.parser')
     
     def fetch_page_selenium(self, url: str) -> Optional[str]:
         """使用 Selenium 獲取網頁內容"""
@@ -199,7 +199,12 @@ class JableScraper:
                     title = title_elem.get_text(strip=True) if title_elem else ''
                     
                     img_elem = item.find('img')
-                    img_src = img_elem.get('src', '') if img_elem else ''
+                    img_src = ''
+                    if img_elem:
+                        # 優先獲取 data-src (懶加載圖片)，然後是 src
+                        img_src = (img_elem.get('data-src') or 
+                                 img_elem.get('data-original') or 
+                                 img_elem.get('src') or '')
                     
                     link_elem = item.find('a')
                     video_url = link_elem.get('href', '') if link_elem else ''
@@ -433,7 +438,12 @@ class JableScraper:
                     title = title_elem.get_text(strip=True) if title_elem else ''
                     
                     img_elem = item.find('img')
-                    img_src = img_elem.get('src', '') if img_elem else ''
+                    img_src = ''
+                    if img_elem:
+                        # 優先獲取 data-src (懶加載圖片)，然後是 src
+                        img_src = (img_elem.get('data-src') or 
+                                 img_elem.get('data-original') or 
+                                 img_elem.get('src') or '')
                     
                     link_elem = item.find('a')
                     video_url = link_elem.get('href', '') if link_elem else ''

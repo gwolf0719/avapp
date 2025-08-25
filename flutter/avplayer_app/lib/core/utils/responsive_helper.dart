@@ -27,8 +27,14 @@ class ResponsiveHelper {
   }
 
   static double getGridItemAspectRatio(BuildContext context) {
-    // 16:9 video thumbnail with title space
-    return 0.7;
+    // 調整寬高比，讓圖片區域更大，文字區域更小
+    if (isTV(context)) {
+      return 0.7; // TV: 較高的比例
+    } else if (isTablet(context)) {
+      return 0.65; // Tablet: 中等比例
+    } else {
+      return 0.6; // Mobile: 調整比例，減少間距
+    }
   }
 
   static EdgeInsets getGridPadding(BuildContext context) {

@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     # 爬蟲設定
     request_timeout: int = 30
     max_retries: int = 3
-    delay_between_requests: float = 1.0
+    delay_between_requests: float = 0.1  # 減少延遲到 0.1 秒以提升速度
     user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
     
     # 日誌設定

@@ -95,48 +95,65 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('影片列表'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.read(videoListProvider.notifier).refresh();
-            },
-          ),
-        ],
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        toolbarHeight: 0, // 隱藏 AppBar
       ),
       body: videoListState.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
-        error: (error, stack) => Center(
+        loading: () => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error,
-                size: 64,
-                color: Colors.red[300],
-              ),
+              const CircularProgressIndicator(),
               const SizedBox(height: 16),
               Text(
-                '載入失敗',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                error.toString(),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  ref.read(videoListProvider.notifier).refresh();
-                },
-                child: const Text('重試'),
+                '載入影片中...',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Colors.grey[600],
+                ),
               ),
             ],
+          ),
+        ),
+        error: (error, stack) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 80,
+                  color: Colors.red[300],
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  '載入失敗',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '無法載入影片列表，請檢查網路連線',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    ref.read(videoListProvider.notifier).refresh();
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('重新載入'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         data: (response) {
@@ -171,8 +188,24 @@ class _HomePageState extends ConsumerState<HomePage> {
                 itemBuilder: (context, index) {
                   if (index == videos.length) {
                     // Loading indicator for more items
-                    return const Center(
-                      child: CircularProgressIndicator(),
+                    return Container(
+                      padding: const EdgeInsets.all(16.0),
+                      child: const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 8.0),
+                            Text(
+                              '載入更多...',
+                              style: TextStyle(
+                                fontSize: 12.0,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     );
                   }
 

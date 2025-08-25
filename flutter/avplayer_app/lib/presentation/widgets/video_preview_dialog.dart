@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../data/models/video_list_item.dart';
-import '../../data/models/video_detail.dart';
 import '../providers/video_detail_provider.dart';
 import '../../core/utils/responsive_helper.dart';
 
@@ -34,66 +33,76 @@ class _VideoPreviewDialogState extends ConsumerState<VideoPreviewDialog> {
   Widget build(BuildContext context) {
     final isTV = ResponsiveHelper.isTV(context);
     final screenSize = MediaQuery.of(context).size;
-    final dialogWidth = isTV ? screenSize.width * 0.7 : screenSize.width * 0.9;
-    final dialogHeight = isTV ? screenSize.height * 0.8 : screenSize.height * 0.7;
+    final isLandscape = screenSize.width > screenSize.height;
+    
+    // 自適應對話框尺寸
+    final dialogWidth = isTV 
+        ? screenSize.width * 0.6 
+        : (isLandscape ? screenSize.width * 0.7 : screenSize.width * 0.85);
+    final maxDialogHeight = screenSize.height * 0.8; // 減少最大高度
     
     final videoDetailAsync = ref.watch(cachedVideoDetailProvider(widget.video.videoId));
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      child: Container(
-        width: dialogWidth,
-        height: dialogHeight,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 20.0,
-              offset: const Offset(0, 10),
-            ),
-          ],
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: dialogWidth,
+          maxHeight: maxDialogHeight,
         ),
-        child: Column(
-          children: [
-            // Large image preview
-            Expanded(
-              flex: 3,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16.0),
-                ),
-                child: CachedNetworkImage(
-                  imageUrl: widget.video.imageUrl,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    color: Colors.grey[800],
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
+        child: Container(
+          width: dialogWidth,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(16.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 20.0,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 圖片區域
+              Expanded(
+                flex: 3,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16.0),
                   ),
-                  errorWidget: (context, url, error) => Container(
-                    color: Colors.grey[800],
-                    child: const Icon(
-                      Icons.error,
-                      color: Colors.white,
-                      size: 64.0,
+                  child: CachedNetworkImage(
+                    imageUrl: widget.video.imageUrl,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: Colors.grey[800],
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey[800],
+                      child: const Icon(
+                        Icons.error,
+                        color: Colors.white,
+                        size: 64.0,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            // Content area
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: EdgeInsets.all(isTV ? 24.0 : 16.0),
+              
+              // 標題和按鈕區域
+              Container(
+                padding: EdgeInsets.all(isTV ? 20.0 : 16.0),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title
+                    // 標題
                     Text(
                       widget.video.title,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -102,36 +111,10 @@ class _VideoPreviewDialogState extends ConsumerState<VideoPreviewDialog> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8.0),
                     
-                    // Video details
-                    Expanded(
-                      child: videoDetailAsync.when(
-                        loading: () => const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                        error: (error, stack) => Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (widget.video.duration != null) ...[
-                              _buildDetailRow(Icons.schedule, '時長: ${widget.video.duration}'),
-                              const SizedBox(height: 4.0),
-                            ],
-                            Text(
-                              '詳情載入失敗: ${error.toString()}',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.red,
-                              ),
-                            ),
-                          ],
-                        ),
-                        data: (detail) => _buildDetailContent(detail),
-                      ),
-                    ),
+                    const SizedBox(height: 12.0),
                     
-                    const SizedBox(height: 16.0),
-                    
-                    // Action buttons
+                    // 按鈕區域
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -140,16 +123,42 @@ class _VideoPreviewDialogState extends ConsumerState<VideoPreviewDialog> {
                           child: const Text('關閉'),
                         ),
                         const SizedBox(width: 12.0),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            widget.onPlayPressed?.call();
-                          },
-                          icon: const Icon(Icons.play_arrow),
-                          label: const Text('開始播放'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).primaryColor,
-                            foregroundColor: Colors.white,
+                        
+                        // 播放按鈕 - 根據載入狀態顯示不同內容
+                        videoDetailAsync.when(
+                          loading: () => ElevatedButton.icon(
+                            onPressed: null, // 載入中不可點擊
+                            icon: const SizedBox(
+                              width: 16.0,
+                              height: 16.0,
+                              child: CircularProgressIndicator(strokeWidth: 2.0),
+                            ),
+                            label: const Text('載入中...'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                          error: (error, stack) => ElevatedButton.icon(
+                            onPressed: null, // 錯誤時不可點擊
+                            icon: const Icon(Icons.error),
+                            label: const Text('載入失敗'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                          data: (detail) => ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              widget.onPlayPressed?.call();
+                            },
+                            icon: const Icon(Icons.play_arrow),
+                            label: const Text('開始播放'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).primaryColor,
+                              foregroundColor: Colors.white,
+                            ),
                           ),
                         ),
                       ],
@@ -157,64 +166,10 @@ class _VideoPreviewDialogState extends ConsumerState<VideoPreviewDialog> {
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildDetailContent(VideoDetail detail) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (detail.description != null && detail.description!.isNotEmpty) ...[
-          Text(
-            detail.description!,
-            style: Theme.of(context).textTheme.bodyMedium,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 8.0),
-        ],
-        if (detail.duration != null) ...[
-          _buildDetailRow(Icons.schedule, '時長: ${detail.duration}'),
-          const SizedBox(height: 4.0),
-        ],
-        if (detail.releaseDate != null) ...[
-          _buildDetailRow(Icons.calendar_today, '發布: ${detail.releaseDate}'),
-          const SizedBox(height: 4.0),
-        ],
-        if (detail.actor != null) ...[
-          _buildDetailRow(Icons.person, '演員: ${detail.actor}'),
-          const SizedBox(height: 4.0),
-        ],
-        if (detail.playUrl != null && detail.playUrl!.isNotEmpty) ...[
-          _buildDetailRow(Icons.video_library, '已就緒'),
-        ] else ...[
-          _buildDetailRow(Icons.warning, '影片來源處理中...'),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildDetailRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 16.0,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-        const SizedBox(width: 8.0),
-        Expanded(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.bodySmall,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
     );
   }
 }
