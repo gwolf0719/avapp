@@ -28,6 +28,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   String? _errorMessage;
   VideoDetail? _videoDetail;
   final bool _isPaused = false;
+  
+  // 音量控制
+  double _volume = 1.0;
+  static const double _volumeStep = 0.1;
+  
+  // 快進/快退控制
+  static const Duration _seekStep = Duration(seconds: 10);
+  static const Duration _fastSeekStep = Duration(seconds: 30);
 
   @override
   void initState() {
@@ -62,18 +70,53 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     }
   }
 
-  void _fastForward() {
+  // 音量控制
+  void _increaseVolume() {
+    if (_videoPlayerController != null) {
+      _volume = (_volume + _volumeStep).clamp(0.0, 1.0);
+      _videoPlayerController!.setVolume(_volume);
+      setState(() {});
+    }
+  }
+
+  void _decreaseVolume() {
+    if (_videoPlayerController != null) {
+      _volume = (_volume - _volumeStep).clamp(0.0, 1.0);
+      _videoPlayerController!.setVolume(_volume);
+      setState(() {});
+    }
+  }
+
+  // 快進/快退控制
+  void _seekForward() {
     if (_videoPlayerController != null) {
       final currentPosition = _videoPlayerController!.value.position;
-      final newPosition = currentPosition + const Duration(seconds: 10);
+      final newPosition = currentPosition + _seekStep;
       _videoPlayerController!.seekTo(newPosition);
     }
   }
 
-  void _rewind() {
+  void _seekBackward() {
     if (_videoPlayerController != null) {
       final currentPosition = _videoPlayerController!.value.position;
-      final newPosition = currentPosition - const Duration(seconds: 10);
+      final newPosition = currentPosition - _seekStep;
+      _videoPlayerController!.seekTo(newPosition);
+    }
+  }
+
+  // 快速快進/快退（長按）
+  void _fastSeekForward() {
+    if (_videoPlayerController != null) {
+      final currentPosition = _videoPlayerController!.value.position;
+      final newPosition = currentPosition + _fastSeekStep;
+      _videoPlayerController!.seekTo(newPosition);
+    }
+  }
+
+  void _fastSeekBackward() {
+    if (_videoPlayerController != null) {
+      final currentPosition = _videoPlayerController!.value.position;
+      final newPosition = currentPosition - _fastSeekStep;
       _videoPlayerController!.seekTo(newPosition);
     }
   }
@@ -163,22 +206,46 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
           onKeyEvent: (node, event) {
             if (event is KeyDownEvent) {
               switch (event.logicalKey) {
+                // 導航控制
                 case LogicalKeyboardKey.goBack:
                 case LogicalKeyboardKey.escape:
                   Navigator.of(context).pop();
                   return KeyEventResult.handled;
+                
+                // 播放/暫停控制
+                case LogicalKeyboardKey.select:
+                case LogicalKeyboardKey.enter:
+                case LogicalKeyboardKey.space:
                 case LogicalKeyboardKey.mediaPlay:
                 case LogicalKeyboardKey.mediaPlayPause:
                   _togglePlayPause();
                   return KeyEventResult.handled;
+                
+                // 音量控制
+                case LogicalKeyboardKey.arrowUp:
+                  _increaseVolume();
+                  return KeyEventResult.handled;
+                case LogicalKeyboardKey.arrowDown:
+                  _decreaseVolume();
+                  return KeyEventResult.handled;
+                
+                // 快進/快退控制
+                case LogicalKeyboardKey.arrowRight:
+                  _seekForward();
+                  return KeyEventResult.handled;
+                case LogicalKeyboardKey.arrowLeft:
+                  _seekBackward();
+                  return KeyEventResult.handled;
+                
+                // 其他媒體控制
                 case LogicalKeyboardKey.mediaStop:
                   _stopVideo();
                   return KeyEventResult.handled;
                 case LogicalKeyboardKey.mediaFastForward:
-                  _fastForward();
+                  _fastSeekForward();
                   return KeyEventResult.handled;
                 case LogicalKeyboardKey.mediaRewind:
-                  _rewind();
+                  _fastSeekBackward();
                   return KeyEventResult.handled;
               }
             }
@@ -240,7 +307,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                               : const CircularProgressIndicator(),
                         ),
                         
-                        // Custom controls overlay (if needed)
+                        // 返回按鈕
                         if (isTV)
                           Positioned(
                             top: 16,
@@ -254,6 +321,39 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                               onPressed: () => Navigator.of(context).pop(),
                             ),
                           ),
+                        
+                        // 音量指示器
+                        Positioned(
+                          top: 16,
+                          right: 16,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.7),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _volume == 0 ? Icons.volume_off : 
+                                  _volume < 0.5 ? Icons.volume_down : Icons.volume_up,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${(_volume * 100).round()}%',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                         
                         // 暫停時的推薦影片列表
                         if (_isPaused && _videoDetail?.actorUrl != null)
