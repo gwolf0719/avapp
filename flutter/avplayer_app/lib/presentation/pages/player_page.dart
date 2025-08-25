@@ -8,6 +8,7 @@ import '../../data/models/video_detail.dart';
 import '../providers/video_detail_provider.dart';
 import '../providers/actor_videos_provider.dart';
 import '../../core/utils/responsive_helper.dart';
+import '../widgets/video_preview_dialog.dart';
 
 class PlayerPage extends ConsumerStatefulWidget {
   final VideoListItem video;
@@ -36,6 +37,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   // 快進/快退控制
   static const Duration _seekStep = Duration(seconds: 10);
   static const Duration _fastSeekStep = Duration(seconds: 30);
+  
+  // 推薦影片選擇
+  int _selectedRecommendationIndex = 0;
+  List<VideoListItem> _recommendations = [];
 
   @override
   void initState() {
@@ -125,6 +130,32 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       final newPosition = currentPosition - _fastSeekStep;
       _videoPlayerController!.seekTo(newPosition);
     }
+  }
+
+  // 選擇推薦影片
+  void _selectRecommendation() {
+    if (_isPaused && _recommendations.isNotEmpty && _selectedRecommendationIndex < _recommendations.length) {
+      final selectedVideo = _recommendations[_selectedRecommendationIndex];
+      _showVideoPreviewDialog(selectedVideo);
+    }
+  }
+
+  // 顯示影片預覽對話框
+  void _showVideoPreviewDialog(VideoListItem video) {
+    showDialog(
+      context: context,
+      builder: (context) => VideoPreviewDialog(
+        video: video,
+        onPlayPressed: () {
+          Navigator.of(context).pop(); // 關閉對話框
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => PlayerPage(video: video),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Future<void> _initializePlayer() async {
@@ -233,7 +264,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                 case LogicalKeyboardKey.space:
                 case LogicalKeyboardKey.mediaPlay:
                 case LogicalKeyboardKey.mediaPlayPause:
-                  _togglePlayPause();
+                  if (_isPaused && _recommendations.isNotEmpty) {
+                    _selectRecommendation();
+                  } else {
+                    _togglePlayPause();
+                  }
                   return KeyEventResult.handled;
                 
                 // 音量控制
@@ -244,12 +279,22 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                   _decreaseVolume();
                   return KeyEventResult.handled;
                 
-                // 快進/快退控制
+                // 快進/快退控制（播放時）或推薦影片選擇（暫停時）
                 case LogicalKeyboardKey.arrowRight:
-                  _seekForward();
+                  if (_isPaused && _recommendations.isNotEmpty) {
+                    _selectedRecommendationIndex = (_selectedRecommendationIndex + 1) % _recommendations.length;
+                    setState(() {});
+                  } else {
+                    _seekForward();
+                  }
                   return KeyEventResult.handled;
                 case LogicalKeyboardKey.arrowLeft:
-                  _seekBackward();
+                  if (_isPaused && _recommendations.isNotEmpty) {
+                    _selectedRecommendationIndex = (_selectedRecommendationIndex - 1 + _recommendations.length) % _recommendations.length;
+                    setState(() {});
+                  } else {
+                    _seekBackward();
+                  }
                   return KeyEventResult.handled;
                 
                 // 其他媒體控制
@@ -444,6 +489,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                                     child: _ActorRecommendations(
                                       actorUrl: _videoDetail!.actorUrl!,
                                       currentVideoId: widget.video.videoId,
+                                      selectedIndex: _selectedRecommendationIndex,
+                                      onRecommendationsLoaded: (recommendations) {
+                                        _recommendations = recommendations;
+                                      },
+                                      onVideoSelected: _showVideoPreviewDialog,
                                     ),
                                   ),
                                 ],
@@ -461,10 +511,16 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 class _ActorRecommendations extends ConsumerWidget {
   final String actorUrl;
   final String currentVideoId;
+  final int selectedIndex;
+  final Function(List<VideoListItem>) onRecommendationsLoaded;
+  final Function(VideoListItem) onVideoSelected;
 
   const _ActorRecommendations({
     required this.actorUrl,
     required this.currentVideoId,
+    required this.selectedIndex,
+    required this.onRecommendationsLoaded,
+    required this.onVideoSelected,
   });
 
   @override
@@ -477,6 +533,11 @@ class _ActorRecommendations extends ConsumerWidget {
             .where((video) => video.videoId != currentVideoId)
             .take(10)
             .toList();
+
+        // 通知父組件推薦影片列表已載入
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          onRecommendationsLoaded(filteredVideos);
+        });
 
         if (filteredVideos.isEmpty) {
           return const Center(
@@ -493,36 +554,42 @@ class _ActorRecommendations extends ConsumerWidget {
           itemCount: filteredVideos.length,
           itemBuilder: (context, index) {
             final video = filteredVideos[index];
+            final isSelected = index == selectedIndex;
+            
             return Container(
               width: 120,
               margin: const EdgeInsets.only(right: 12),
               child: GestureDetector(
                 onTap: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (context) => PlayerPage(video: video),
-                    ),
-                  );
+                  onVideoSelected(video);
                 },
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: Image.network(
-                          video.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey[800],
-                              child: const Icon(
-                                Icons.error,
-                                color: Colors.white,
-                              ),
-                            );
-                          },
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: isSelected 
+                          ? Border.all(color: Colors.blue, width: 3)
+                          : null,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: AspectRatio(
+                          aspectRatio: 16 / 9,
+                          child: Image.network(
+                            video.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[800],
+                                child: const Icon(
+                                  Icons.error,
+                                  color: Colors.white,
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ),
