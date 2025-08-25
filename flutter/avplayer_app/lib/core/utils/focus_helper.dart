@@ -43,6 +43,70 @@ class FocusHelper {
       ),
     );
   }
+
+  // TV 遙控器按鍵支援
+  static Widget buildTVRemoteControl({
+    required Widget child,
+    required FocusNode focusNode,
+    required VoidCallback onSelect,
+    VoidCallback? onBack,
+    VoidCallback? onUp,
+    VoidCallback? onDown,
+    VoidCallback? onLeft,
+    VoidCallback? onRight,
+    VoidCallback? onPlayPause,
+    VoidCallback? onStop,
+    VoidCallback? onFastForward,
+    VoidCallback? onRewind,
+    bool autofocus = false,
+  }) {
+    return Focus(
+      focusNode: focusNode,
+      autofocus: autofocus,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          switch (event.logicalKey) {
+            case LogicalKeyboardKey.select:
+            case LogicalKeyboardKey.enter:
+            case LogicalKeyboardKey.space:
+              onSelect();
+              return KeyEventResult.handled;
+            case LogicalKeyboardKey.goBack:
+            case LogicalKeyboardKey.escape:
+              onBack?.call();
+              return KeyEventResult.handled;
+            case LogicalKeyboardKey.arrowUp:
+              onUp?.call();
+              return KeyEventResult.handled;
+            case LogicalKeyboardKey.arrowDown:
+              onDown?.call();
+              return KeyEventResult.handled;
+            case LogicalKeyboardKey.arrowLeft:
+              onLeft?.call();
+              return KeyEventResult.handled;
+            case LogicalKeyboardKey.arrowRight:
+              onRight?.call();
+              return KeyEventResult.handled;
+            case LogicalKeyboardKey.mediaPlay:
+            case LogicalKeyboardKey.mediaPlayPause:
+              onPlayPause?.call();
+              return KeyEventResult.handled;
+            case LogicalKeyboardKey.mediaStop:
+              onStop?.call();
+              return KeyEventResult.handled;
+            case LogicalKeyboardKey.mediaFastForward:
+              onFastForward?.call();
+              return KeyEventResult.handled;
+            case LogicalKeyboardKey.mediaRewind:
+              onRewind?.call();
+              return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: child,
+    );
+  }
 }
 
 class GridFocusManager {
@@ -90,5 +154,21 @@ class GridFocusManager {
     if ((currentIndex + 1) % columnCount == 0) return null;
     final rightIndex = currentIndex + 1;
     return rightIndex < totalItems ? rightIndex : null;
+  }
+
+  // 處理 TV 遙控器方向鍵導航
+  int? navigateWithTVRemote(int currentIndex, int totalItems, LogicalKeyboardKey key) {
+    switch (key) {
+      case LogicalKeyboardKey.arrowUp:
+        return getUpIndex(currentIndex);
+      case LogicalKeyboardKey.arrowDown:
+        return getDownIndex(currentIndex, totalItems);
+      case LogicalKeyboardKey.arrowLeft:
+        return getLeftIndex(currentIndex);
+      case LogicalKeyboardKey.arrowRight:
+        return getRightIndex(currentIndex, totalItems);
+      default:
+        return null;
+    }
   }
 }

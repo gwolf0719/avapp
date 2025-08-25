@@ -8,7 +8,6 @@ import '../../data/models/video_detail.dart';
 import '../providers/video_detail_provider.dart';
 import '../providers/actor_videos_provider.dart';
 import '../../core/utils/responsive_helper.dart';
-import '../widgets/video_item_card.dart';
 
 class PlayerPage extends ConsumerStatefulWidget {
   final VideoListItem video;
@@ -25,11 +24,10 @@ class PlayerPage extends ConsumerStatefulWidget {
 class _PlayerPageState extends ConsumerState<PlayerPage> {
   VideoPlayerController? _videoPlayerController;
   ChewieController? _chewieController;
-  bool _isControlsVisible = true;
   bool _isLoading = true;
   String? _errorMessage;
   VideoDetail? _videoDetail;
-  bool _isPaused = false;
+  final bool _isPaused = false;
 
   @override
   void initState() {
@@ -44,6 +42,40 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     _videoPlayerController?.dispose();
     _chewieController?.dispose();
     super.dispose();
+  }
+
+  // TV 遙控器播放控制方法
+  void _togglePlayPause() {
+    if (_videoPlayerController != null) {
+      if (_videoPlayerController!.value.isPlaying) {
+        _videoPlayerController!.pause();
+      } else {
+        _videoPlayerController!.play();
+      }
+    }
+  }
+
+  void _stopVideo() {
+    if (_videoPlayerController != null) {
+      _videoPlayerController!.pause();
+      _videoPlayerController!.seekTo(Duration.zero);
+    }
+  }
+
+  void _fastForward() {
+    if (_videoPlayerController != null) {
+      final currentPosition = _videoPlayerController!.value.position;
+      final newPosition = currentPosition + const Duration(seconds: 10);
+      _videoPlayerController!.seekTo(newPosition);
+    }
+  }
+
+  void _rewind() {
+    if (_videoPlayerController != null) {
+      final currentPosition = _videoPlayerController!.value.position;
+      final newPosition = currentPosition - const Duration(seconds: 10);
+      _videoPlayerController!.seekTo(newPosition);
+    }
   }
 
   Future<void> _initializePlayer() async {
@@ -67,6 +99,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
           allowMuting: true,
           allowPlaybackSpeedChanging: true,
           showControlsOnInitialize: true,
+          showOptions: false, // 隱藏選項按鈕
+          showControls: true,
           errorBuilder: (context, errorMessage) {
             return Center(
               child: Column(
@@ -124,150 +158,149 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: _isLoading
-            ? const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(color: Colors.white),
-                    SizedBox(height: 16),
-                    Text(
-                      '載入中...',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                  ],
-                ),
-              )
-            : _errorMessage != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error,
-                          size: 64,
-                          color: Colors.red[300],
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          '播放失敗',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('返回'),
-                        ),
-                      ],
-                    ),
-                  )
-                : Stack(
+        child: Focus(
+          autofocus: true,
+          onKeyEvent: (node, event) {
+            if (event is KeyDownEvent) {
+              switch (event.logicalKey) {
+                case LogicalKeyboardKey.goBack:
+                case LogicalKeyboardKey.escape:
+                  Navigator.of(context).pop();
+                  return KeyEventResult.handled;
+                case LogicalKeyboardKey.mediaPlay:
+                case LogicalKeyboardKey.mediaPlayPause:
+                  _togglePlayPause();
+                  return KeyEventResult.handled;
+                case LogicalKeyboardKey.mediaStop:
+                  _stopVideo();
+                  return KeyEventResult.handled;
+                case LogicalKeyboardKey.mediaFastForward:
+                  _fastForward();
+                  return KeyEventResult.handled;
+                case LogicalKeyboardKey.mediaRewind:
+                  _rewind();
+                  return KeyEventResult.handled;
+              }
+            }
+            return KeyEventResult.ignored;
+          },
+          child: _isLoading
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Video player
-                      Center(
-                        child: _chewieController != null
-                            ? Chewie(controller: _chewieController!)
-                            : const CircularProgressIndicator(),
+                      CircularProgressIndicator(color: Colors.white),
+                      SizedBox(height: 16),
+                      Text(
+                        '載入中...',
+                        style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
-                      
-                      // Custom controls overlay (if needed)
-                      if (isTV)
-                        Positioned(
-                          top: 16,
-                          left: 16,
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.arrow_back,
+                    ],
+                  ),
+                )
+              : _errorMessage != null
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error,
+                            size: 64,
+                            color: Colors.red[300],
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            '播放失敗',
+                            style: TextStyle(
                               color: Colors.white,
-                              size: 32,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                             ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
                             onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('返回'),
                           ),
-                        ),
-                      
-                      // Title overlay
-                      Positioned(
-                        top: isTV ? 16 : 40,
-                        left: isTV ? 80 : 16,
-                        right: 16,
-                        child: AnimatedOpacity(
-                          opacity: _isControlsVisible ? 1.0 : 0.0,
-                          duration: const Duration(milliseconds: 300),
-                          child: Text(
-                            widget.video.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              shadows: [
-                                Shadow(
-                                  offset: Offset(1, 1),
-                                  blurRadius: 4,
-                                  color: Colors.black,
-                                ),
-                              ],
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
+                        ],
                       ),
-                      
-                      // 暫停時的推薦影片列表
-                      if (_isPaused && _videoDetail?.actorUrl != null)
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            height: 200,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withValues(alpha: 0.8),
-                                  Colors.black.withValues(alpha: 0.9),
+                    )
+                  : Stack(
+                      children: [
+                        // Video player
+                        Center(
+                          child: _chewieController != null
+                              ? Chewie(controller: _chewieController!)
+                              : const CircularProgressIndicator(),
+                        ),
+                        
+                        // Custom controls overlay (if needed)
+                        if (isTV)
+                          Positioned(
+                            top: 16,
+                            left: 16,
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                                size: 32,
+                              ),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                          ),
+                        
+                        // 暫停時的推薦影片列表
+                        if (_isPaused && _videoDetail?.actorUrl != null)
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              height: 200,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withValues(alpha: 0.8),
+                                    Colors.black.withValues(alpha: 0.9),
+                                  ],
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Text(
+                                      '${_videoDetail?.actor ?? '演員'} 的其他作品',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: _ActorRecommendations(
+                                      actorUrl: _videoDetail!.actorUrl!,
+                                      currentVideoId: widget.video.videoId,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Text(
-                                    '${_videoDetail?.actor ?? '演員'} 的其他作品',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _ActorRecommendations(
-                                    actorUrl: _videoDetail!.actorUrl!,
-                                    currentVideoId: widget.video.videoId,
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
-                        ),
-                    ],
-                  ),
+                      ],
+                    ),
+        ),
       ),
     );
   }

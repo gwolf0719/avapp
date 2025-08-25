@@ -95,20 +95,26 @@ class _VideoItemCardState extends State<VideoItemCard>
       builder: (context, child) {
         return Transform.scale(
           scale: _scaleAnimation.value,
-          child: Focus(
-            focusNode: _internalFocusNode,
-            autofocus: widget.autofocus,
-            onKeyEvent: (node, event) {
-              if (event is KeyDownEvent) {
-                if (event.logicalKey == LogicalKeyboardKey.select ||
-                    event.logicalKey == LogicalKeyboardKey.enter ||
-                    event.logicalKey == LogicalKeyboardKey.space) {
-                  widget.onTap();
-                  return KeyEventResult.handled;
+                      child: Focus(
+              focusNode: _internalFocusNode,
+              autofocus: widget.autofocus,
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent) {
+                  switch (event.logicalKey) {
+                    case LogicalKeyboardKey.select:
+                    case LogicalKeyboardKey.enter:
+                    case LogicalKeyboardKey.space:
+                      widget.onTap();
+                      return KeyEventResult.handled;
+                    case LogicalKeyboardKey.goBack:
+                    case LogicalKeyboardKey.escape:
+                      // 返回上一頁
+                      Navigator.of(context).pop();
+                      return KeyEventResult.handled;
+                  }
                 }
-              }
-              return KeyEventResult.ignored;
-            },
+                return KeyEventResult.ignored;
+              },
             child: Card(
               elevation: isFocused ? 8.0 : 2.0,
               shape: RoundedRectangleBorder(
