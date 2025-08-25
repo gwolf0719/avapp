@@ -7,6 +7,7 @@ import '../pages/player_page.dart';
 import '../../data/models/video_list_item.dart';
 import '../../core/utils/responsive_helper.dart';
 import '../../core/utils/focus_helper.dart';
+import '../../core/utils/navigation_manager.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -19,6 +20,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   final ScrollController _scrollController = ScrollController();
   int _focusedIndex = 0;
   GridFocusManager? _focusManager;
+  final NavigationManager _navigationManager = NavigationManager();
 
   @override
   void initState() {
@@ -79,6 +81,9 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void _navigateToPlayer(VideoListItem video) {
+    // 添加導航記錄
+    _navigationManager.addNavigation('/player');
+    
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => PlayerPage(video: video),

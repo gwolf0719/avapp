@@ -9,6 +9,7 @@ import '../providers/video_detail_provider.dart';
 import '../providers/actor_videos_provider.dart';
 import '../../core/utils/responsive_helper.dart';
 import '../widgets/video_preview_dialog.dart';
+import '../../core/utils/navigation_manager.dart';
 
 class PlayerPage extends ConsumerStatefulWidget {
   final VideoListItem video;
@@ -41,6 +42,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   // 推薦影片選擇
   int _selectedRecommendationIndex = 0;
   List<VideoListItem> _recommendations = [];
+  final NavigationManager _navigationManager = NavigationManager();
 
   @override
   void initState() {
@@ -142,12 +144,17 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
   // 顯示影片預覽對話框
   void _showVideoPreviewDialog(VideoListItem video) {
+    // 添加導航記錄（推薦影片選擇）
+    _navigationManager.addNavigation('/player/recommendation');
+    
     showDialog(
       context: context,
       builder: (context) => VideoPreviewDialog(
         video: video,
         onPlayPressed: () {
           Navigator.of(context).pop(); // 關閉對話框
+          // 移除推薦影片導航記錄，因為要替換當前播放器
+          _navigationManager.removeLastNavigation();
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => PlayerPage(video: video),
@@ -255,6 +262,8 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                 // 導航控制
                 case LogicalKeyboardKey.goBack:
                 case LogicalKeyboardKey.escape:
+                  // 移除當前頁面的導航記錄
+                  _navigationManager.removeLastNavigation();
                   Navigator.of(context).pop();
                   return KeyEventResult.handled;
                 

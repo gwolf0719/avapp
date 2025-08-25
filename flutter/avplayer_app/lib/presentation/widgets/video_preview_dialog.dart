@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../data/models/video_list_item.dart';
 import '../providers/video_detail_provider.dart';
 import '../../core/utils/responsive_helper.dart';
+import '../../core/utils/navigation_manager.dart';
 
 class VideoPreviewDialog extends ConsumerStatefulWidget {
   final VideoListItem video;
@@ -20,6 +21,8 @@ class VideoPreviewDialog extends ConsumerStatefulWidget {
 }
 
 class _VideoPreviewDialogState extends ConsumerState<VideoPreviewDialog> {
+  final NavigationManager _navigationManager = NavigationManager();
+  
   @override
   void initState() {
     super.initState();
@@ -138,7 +141,11 @@ class _VideoPreviewDialogState extends ConsumerState<VideoPreviewDialog> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () {
+                      // 移除對話框的導航記錄
+                      _navigationManager.removeLastNavigation();
+                      Navigator.of(context).pop();
+                    },
                     child: const Text('關閉'),
                   ),
                   const SizedBox(width: 12.0),
@@ -169,6 +176,8 @@ class _VideoPreviewDialogState extends ConsumerState<VideoPreviewDialog> {
                     ),
                     data: (detail) => ElevatedButton.icon(
                       onPressed: () {
+                        // 移除對話框的導航記錄
+                        _navigationManager.removeLastNavigation();
                         Navigator.of(context).pop();
                         widget.onPlayPressed?.call();
                       },
@@ -262,7 +271,11 @@ class _VideoPreviewDialogState extends ConsumerState<VideoPreviewDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () {
+                        // 移除對話框的導航記錄
+                        _navigationManager.removeLastNavigation();
+                        Navigator.of(context).pop();
+                      },
                       child: const Text('關閉'),
                     ),
                     const SizedBox(width: 12.0),
@@ -293,6 +306,8 @@ class _VideoPreviewDialogState extends ConsumerState<VideoPreviewDialog> {
                       ),
                       data: (detail) => ElevatedButton.icon(
                         onPressed: () {
+                          // 移除對話框的導航記錄
+                          _navigationManager.removeLastNavigation();
                           Navigator.of(context).pop();
                           widget.onPlayPressed?.call();
                         },
