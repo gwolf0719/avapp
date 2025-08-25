@@ -30,6 +30,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   String? _errorMessage;
   VideoDetail? _videoDetail;
   bool _isPaused = false;
+  bool _showPauseControls = false; // 控制是否顯示暫停按鈕
   
   // 音量控制
   double _volume = 1.0;
@@ -66,11 +67,13 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
         _videoPlayerController!.pause();
         setState(() {
           _isPaused = true;
+          _showPauseControls = true; // 顯示暫停按鈕
         });
       } else {
         _videoPlayerController!.play();
         setState(() {
           _isPaused = false;
+          _showPauseControls = false; // 隱藏暫停按鈕
         });
       }
     }
@@ -291,16 +294,20 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                 // 快進/快退控制（播放時）或推薦影片選擇（暫停時）
                 case LogicalKeyboardKey.arrowRight:
                   if (_isPaused && _recommendations.isNotEmpty) {
-                    _selectedRecommendationIndex = (_selectedRecommendationIndex + 1) % _recommendations.length;
-                    setState(() {});
+                    // 只更新選擇索引，不觸發暫停狀態
+                    setState(() {
+                      _selectedRecommendationIndex = (_selectedRecommendationIndex + 1) % _recommendations.length;
+                    });
                   } else {
                     _seekForward();
                   }
                   return KeyEventResult.handled;
                 case LogicalKeyboardKey.arrowLeft:
                   if (_isPaused && _recommendations.isNotEmpty) {
-                    _selectedRecommendationIndex = (_selectedRecommendationIndex - 1 + _recommendations.length) % _recommendations.length;
-                    setState(() {});
+                    // 只更新選擇索引，不觸發暫停狀態
+                    setState(() {
+                      _selectedRecommendationIndex = (_selectedRecommendationIndex - 1 + _recommendations.length) % _recommendations.length;
+                    });
                   } else {
                     _seekBackward();
                   }
@@ -379,6 +386,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                                       _videoPlayerController!.pause();
                                       setState(() {
                                         _isPaused = true;
+                                        _showPauseControls = true; // 顯示暫停按鈕
                                       });
                                     }
                                   },
@@ -421,7 +429,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
 
                         
                         // 暫停時的控制介面
-                        if (_isPaused)
+                        if (_isPaused && _showPauseControls)
                           Positioned.fill(
                             child: Container(
                               color: Colors.black.withValues(alpha: 0.3),
