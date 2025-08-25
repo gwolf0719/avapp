@@ -532,7 +532,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   }
 }
 
-class _ActorRecommendations extends ConsumerWidget {
+class _ActorRecommendations extends ConsumerStatefulWidget {
   final String actorUrl;
   final String currentVideoId;
   final int selectedIndex;
@@ -548,19 +548,69 @@ class _ActorRecommendations extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final actorVideosState = ref.watch(actorVideosProvider(actorUrl));
+  ConsumerState<_ActorRecommendations> createState() => _ActorRecommendationsState();
+}
+
+class _ActorRecommendationsState extends ConsumerState<_ActorRecommendations> {
+  final ScrollController _scrollController = ScrollController();
+  List<VideoListItem> _videos = [];
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // 自動滾動到選中的項目
+  void _scrollToSelectedItem() {
+    if (_videos.isEmpty || !_scrollController.hasClients) return;
+    
+    final itemWidth = 120.0 + 12.0; // 項目寬度 + 右邊距
+    final containerWidth = _scrollController.position.viewportDimension;
+    
+    // 計算選中項目的位置
+    final selectedItemOffset = widget.selectedIndex * itemWidth;
+    
+    // 計算目標滾動位置，讓選中項目居中
+    final targetOffset = selectedItemOffset - (containerWidth / 2) + (itemWidth / 2);
+    
+    // 確保滾動位置在有效範圍內
+    final maxOffset = _scrollController.position.maxScrollExtent;
+    final clampedOffset = targetOffset.clamp(0.0, maxOffset);
+    
+    // 執行滾動動畫
+    _scrollController.animateTo(
+      clampedOffset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final actorVideosState = ref.watch(actorVideosProvider(widget.actorUrl));
 
     return actorVideosState.when(
       data: (actorVideos) {
         final filteredVideos = actorVideos.videos
-            .where((video) => video.videoId != currentVideoId)
+            .where((video) => video.videoId != widget.currentVideoId)
             .take(10)
             .toList();
 
-        // 通知父組件推薦影片列表已載入
+        // 更新本地影片列表
+        if (_videos != filteredVideos) {
+          _videos = filteredVideos;
+          // 通知父組件推薦影片列表已載入
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            widget.onRecommendationsLoaded(filteredVideos);
+          });
+        }
+
+        // 當選中索引改變時，自動滾動到選中項目
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          onRecommendationsLoaded(filteredVideos);
+          if (_videos.isNotEmpty && widget.selectedIndex < _videos.length) {
+            _scrollToSelectedItem();
+          }
         });
 
         if (filteredVideos.isEmpty) {
@@ -573,19 +623,20 @@ class _ActorRecommendations extends ConsumerWidget {
         }
 
         return ListView.builder(
+          controller: _scrollController,
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: filteredVideos.length,
           itemBuilder: (context, index) {
             final video = filteredVideos[index];
-            final isSelected = index == selectedIndex;
+            final isSelected = index == widget.selectedIndex;
             
             return Container(
               width: 120,
               margin: const EdgeInsets.only(right: 12),
               child: GestureDetector(
                 onTap: () {
-                  onVideoSelected(video);
+                  widget.onVideoSelected(video);
                 },
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
