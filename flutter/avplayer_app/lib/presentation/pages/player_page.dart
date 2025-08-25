@@ -27,7 +27,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   bool _isLoading = true;
   String? _errorMessage;
   VideoDetail? _videoDetail;
-  final bool _isPaused = false;
+  bool _isPaused = false;
   
   // 音量控制
   double _volume = 1.0;
@@ -57,8 +57,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
     if (_videoPlayerController != null) {
       if (_videoPlayerController!.value.isPlaying) {
         _videoPlayerController!.pause();
+        setState(() {
+          _isPaused = true;
+        });
       } else {
         _videoPlayerController!.play();
+        setState(() {
+          _isPaused = false;
+        });
       }
     }
   }
@@ -133,6 +139,15 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
         );
 
         await _videoPlayerController!.initialize();
+
+        // 添加播放狀態監聽
+        _videoPlayerController!.addListener(() {
+          if (mounted) {
+            setState(() {
+              _isPaused = !_videoPlayerController!.value.isPlaying;
+            });
+          }
+        });
 
         _chewieController = ChewieController(
           videoPlayerController: _videoPlayerController!,
@@ -223,18 +238,18 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                 
                 // 音量控制
                 case LogicalKeyboardKey.arrowUp:
-                  _increaseVolume();
+                  _decreaseVolume();
                   return KeyEventResult.handled;
                 case LogicalKeyboardKey.arrowDown:
-                  _decreaseVolume();
+                  _increaseVolume();
                   return KeyEventResult.handled;
                 
                 // 快進/快退控制
                 case LogicalKeyboardKey.arrowRight:
-                  _seekForward();
+                  _seekBackward();
                   return KeyEventResult.handled;
                 case LogicalKeyboardKey.arrowLeft:
-                  _seekBackward();
+                  _seekForward();
                   return KeyEventResult.handled;
                 
                 // 其他媒體控制
@@ -300,11 +315,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                     )
                   : Stack(
                       children: [
-                        // Video player
-                        Center(
+                        // Video player - 滿版顯示
+                        SizedBox.expand(
                           child: _chewieController != null
                               ? Chewie(controller: _chewieController!)
-                              : const CircularProgressIndicator(),
+                              : const Center(child: CircularProgressIndicator()),
                         ),
                         
                         // 返回按鈕
@@ -354,6 +369,55 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                             ),
                           ),
                         ),
+                        
+                        // 暫停時的控制介面
+                        if (_isPaused)
+                          Positioned.fill(
+                            child: Container(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    // 播放按鈕
+                                    Container(
+                                      width: 80,
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(alpha: 0.9),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.play_arrow,
+                                          size: 40,
+                                          color: Colors.black,
+                                        ),
+                                        onPressed: _togglePlayPause,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    // 控制提示
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(alpha: 0.7),
+                                        borderRadius: BorderRadius.circular(25),
+                                      ),
+                                      child: const Text(
+                                        '按 OK 鍵繼續播放',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         
                         // 暫停時的推薦影片列表
                         if (_isPaused && _videoDetail?.actorUrl != null)
