@@ -321,8 +321,28 @@ class JableScraper:
             actor_url = ''
             actor_link = soup.find('a', class_='model')
             if actor_link:
-                actor = actor_link.get_text(strip=True)
                 actor_url = actor_link.get('href', '')
+                # 從演員頁面獲取完整演員名稱
+                if actor_url:
+                    try:
+                        actor_page_content = await self.fetch_page(actor_url)
+                        if actor_page_content:
+                            actor_soup = self.parse_html(actor_page_content)
+                            actor_name_elem = actor_soup.find('h1', class_='actor-name')
+                            if actor_name_elem:
+                                actor = actor_name_elem.get_text(strip=True)
+                            else:
+                                # 如果找不到 actor-name，使用影片頁面的演員名稱作為備用
+                                actor = actor_link.get_text(strip=True)
+                        else:
+                            # 如果無法獲取演員頁面，使用影片頁面的演員名稱作為備用
+                            actor = actor_link.get_text(strip=True)
+                    except Exception as e:
+                        logger.warning(f"無法從演員頁面獲取演員名稱: {str(e)}")
+                        # 使用影片頁面的演員名稱作為備用
+                        actor = actor_link.get_text(strip=True)
+                else:
+                    actor = actor_link.get_text(strip=True)
             
             # 提取播放連結和金鑰
             play_url = ''
