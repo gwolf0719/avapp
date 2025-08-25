@@ -31,6 +31,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   VideoDetail? _videoDetail;
   bool _isPaused = false;
   bool _showPauseControls = false; // 控制是否顯示暫停按鈕
+  bool _userPaused = false; // 用戶主動暫停標記
   
   // 音量控制
   double _volume = 1.0;
@@ -67,12 +68,14 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
         _videoPlayerController!.pause();
         setState(() {
           _isPaused = true;
+          _userPaused = true; // 標記為用戶主動暫停
           _showPauseControls = true; // 顯示暫停按鈕
         });
       } else {
         _videoPlayerController!.play();
         setState(() {
           _isPaused = false;
+          _userPaused = false; // 清除用戶暫停標記
           _showPauseControls = false; // 隱藏暫停按鈕
         });
       }
@@ -186,6 +189,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
           if (mounted) {
             setState(() {
               _isPaused = !_videoPlayerController!.value.isPlaying;
+              // 只有在用戶主動暫停時才顯示控制項
+              if (!_userPaused && _isPaused) {
+                _showPauseControls = false;
+              }
             });
           }
         });
@@ -386,6 +393,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                                       _videoPlayerController!.pause();
                                       setState(() {
                                         _isPaused = true;
+                                        _userPaused = true; // 標記為用戶主動暫停
                                         _showPauseControls = true; // 顯示暫停按鈕
                                       });
                                     }
@@ -478,7 +486,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                           ),
                         
                         // 暫停時的推薦影片列表
-                        if (_isPaused && _videoDetail != null)
+                        if (_isPaused && _userPaused && _videoDetail != null)
                           Positioned(
                             bottom: 0,
                             left: 0,
