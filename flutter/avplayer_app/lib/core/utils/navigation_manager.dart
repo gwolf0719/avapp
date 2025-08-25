@@ -46,14 +46,18 @@ class NavigationManager {
 
   // 顯示退出確認對話框
   Future<bool> _showExitConfirmation(BuildContext context) async {
+    // 如果已經顯示過對話框，再次顯示
     if (_hasShownExitDialog) {
-      // 如果已經顯示過對話框，直接退出
-      await _closeApplication();
-      return true;
+      return await _showExitDialog(context);
     }
 
     _hasShownExitDialog = true;
     
+    return await _showExitDialog(context);
+  }
+
+  // 顯示退出對話框
+  Future<bool> _showExitDialog(BuildContext context) async {
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -64,7 +68,6 @@ class NavigationManager {
           actions: [
             TextButton(
               onPressed: () {
-                _hasShownExitDialog = false;
                 Navigator.of(context).pop(false);
               },
               child: const Text('取消'),
