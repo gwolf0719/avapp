@@ -48,6 +48,7 @@ class NavigationManager {
   Future<bool> _showExitConfirmation(BuildContext context) async {
     if (_hasShownExitDialog) {
       // 如果已經顯示過對話框，直接退出
+      await _closeApplication();
       return true;
     }
 
