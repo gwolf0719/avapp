@@ -187,9 +187,9 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
           allowFullScreen: true,
           allowMuting: true,
           allowPlaybackSpeedChanging: true,
-          showControlsOnInitialize: true,
+          showControlsOnInitialize: false, // 不顯示預設控制項
           showOptions: false, // 隱藏選項按鈕
-          showControls: true,
+          showControls: false, // 隱藏預設控制項
           errorBuilder: (context, errorMessage) {
             return Center(
               child: Column(
@@ -364,7 +364,15 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                         SizedBox.expand(
                           child: _chewieController != null
                               ? GestureDetector(
-                                  onTap: _togglePlayPause, // OK鍵動作與點擊畫面共通
+                                  onTap: () {
+                                    // 直接進入暫停狀態並顯示推薦影片
+                                    if (!_isPaused) {
+                                      _videoPlayerController!.pause();
+                                      setState(() {
+                                        _isPaused = true;
+                                      });
+                                    }
+                                  },
                                   onVerticalDragUpdate: (details) {
                                     // 上下滑動控制音量
                                     if (details.delta.dy < -10) {
@@ -453,7 +461,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                           ),
                         
                         // 暫停時的推薦影片列表
-                        if (_isPaused && _videoDetail?.actorUrl != null)
+                        if (_isPaused && _videoDetail != null)
                           Positioned(
                             bottom: 0,
                             left: 0,
@@ -486,15 +494,22 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                                     ),
                                   ),
                                   Expanded(
-                                    child: _ActorRecommendations(
-                                      actorUrl: _videoDetail!.actorUrl!,
-                                      currentVideoId: widget.video.videoId,
-                                      selectedIndex: _selectedRecommendationIndex,
-                                      onRecommendationsLoaded: (recommendations) {
-                                        _recommendations = recommendations;
-                                      },
-                                      onVideoSelected: _showVideoPreviewDialog,
-                                    ),
+                                    child: _videoDetail?.actorUrl != null
+                                        ? _ActorRecommendations(
+                                            actorUrl: _videoDetail!.actorUrl!,
+                                            currentVideoId: widget.video.videoId,
+                                            selectedIndex: _selectedRecommendationIndex,
+                                            onRecommendationsLoaded: (recommendations) {
+                                              _recommendations = recommendations;
+                                            },
+                                            onVideoSelected: _showVideoPreviewDialog,
+                                          )
+                                        : const Center(
+                                            child: Text(
+                                              '載入推薦影片中...',
+                                              style: TextStyle(color: Colors.white70),
+                                            ),
+                                          ),
                                   ),
                                 ],
                               ),
