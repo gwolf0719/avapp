@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import List
+import os
 
 
 class Settings(BaseSettings):
@@ -8,6 +9,7 @@ class Settings(BaseSettings):
     # 應用程式基本設定
     app_name: str = "Web Scraper API"
     debug: bool = True
+    port: int = int(os.getenv("PORT", "8080"))  # 動態讀取環境變數 PORT，預設 8080
     
     # CORS 設定
     allowed_hosts: List[str] = ["*"]  # 允許所有來源，開發環境使用

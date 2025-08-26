@@ -1,5 +1,10 @@
 class ApiConstants {
-  static const String baseUrl = 'http://10.0.2.2:8080';
+  // 根據編譯時環境變數決定 API 基礎 URL
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:8080', // 開發環境預設值
+  );
+  
   static const String apiV1 = '$baseUrl/api/v1/scraper';
   
   // Endpoints

@@ -20,16 +20,17 @@ RUN pip install --no-cache-dir -r api/requirements.txt
 COPY . .
 
 # 暴露 API 端口
-EXPOSE 8000
+EXPOSE 8080
 
 # 設定環境變數
 ENV PYTHONPATH=/app/api
 ENV DEBUG=False
 ENV LOG_LEVEL=INFO
+ENV PORT=8080
 
 # 健康檢查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/api/v1/scraper/health || exit 1
+    CMD curl -f http://localhost:8080/api/v1/scraper/health || exit 1
 
 # 啟動 API 服務
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]

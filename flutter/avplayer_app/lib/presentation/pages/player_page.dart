@@ -49,7 +49,6 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   final NavigationManager _navigationManager = NavigationManager();
   
   // 方向控制提示
-  bool _showOrientationHint = false;
   Timer? _orientationHintTimer;
 
   @override
@@ -102,7 +101,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       _volume = (_volume + _volumeStep).clamp(0.0, 1.0);
       _videoPlayerController!.setVolume(_volume);
       setState(() {});
-      _showOrientationHint();
+      _triggerOrientationHint();
     }
   }
 
@@ -111,7 +110,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       _volume = (_volume - _volumeStep).clamp(0.0, 1.0);
       _videoPlayerController!.setVolume(_volume);
       setState(() {});
-      _showOrientationHint();
+      _triggerOrientationHint();
     }
   }
 
@@ -121,7 +120,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       final currentPosition = _videoPlayerController!.value.position;
       final newPosition = currentPosition + _seekStep;
       _videoPlayerController!.seekTo(newPosition);
-      _showOrientationHint();
+      _triggerOrientationHint();
     }
   }
 
@@ -130,7 +129,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       final currentPosition = _videoPlayerController!.value.position;
       final newPosition = currentPosition - _seekStep;
       _videoPlayerController!.seekTo(newPosition);
-      _showOrientationHint();
+      _triggerOrientationHint();
     }
   }
 
@@ -152,18 +151,11 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   }
 
   // 顯示方向控制提示
-  void _showOrientationHint() {
-    setState(() {
-      _showOrientationHint = true;
-    });
-    
+  void _triggerOrientationHint() {
+    // 暫時只是取消之前的計時器，稍後可以加入視覺提示
     _orientationHintTimer?.cancel();
     _orientationHintTimer = Timer(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _showOrientationHint = false;
-        });
-      }
+      // 可以在這裡加入隱藏提示的邏輯
     });
   }
 
