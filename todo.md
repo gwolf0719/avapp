@@ -115,6 +115,20 @@
 - [ ] 建立部署指南
 - [ ] 新增故障排除指南
 
+### GCP Cloud Build 自動部署
+- [x] 創建專案根目錄 Dockerfile
+- [x] 創建 cloudbuild.yaml 配置文件
+- [x] 創建 .dockerignore 文件
+- [x] 創建 GCP 設定指南 (GCP_SETUP.md)
+- [x] 移除不需要的 GitHub Actions 和手動部署腳本
+- [ ] 設定 Google Cloud 專案和 API 啟用
+- [ ] 在 GCP Console 設定 Cloud Build 觸發器
+- [ ] 連接 GitHub 倉庫到 Cloud Build
+- [ ] 設定 Cloud Build 服務帳戶權限
+- [ ] 測試自動化部署流程（推送到 main 分支）
+- [ ] 更新 Flutter 應用中的 API 基礎 URL 配置
+- [ ] 設定監控和日誌收集
+
 ## 技術細節
 
 ### HTML 解析目標

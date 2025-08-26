@@ -11,3 +11,8 @@ asyncio-throttle>=1.0.2,<2.0.0
 # lxml>=4.9.3,<5.0.0  # 暫時移除，Python 3.13 相容性問題
 fake-useragent>=1.4.0,<2.0.0
 brotli>=1.1.0,<2.0.0
+
+# Testing dependencies
+pytest>=7.4.0,<8.0.0
+pytest-asyncio>=0.21.0,<1.0.0
+httpx>=0.25.0,<1.0.0

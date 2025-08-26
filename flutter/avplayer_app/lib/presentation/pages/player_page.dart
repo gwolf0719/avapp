@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
 import '../../data/models/video_list_item.dart';
@@ -8,6 +9,7 @@ import '../../data/models/video_detail.dart';
 import '../providers/video_detail_provider.dart';
 import '../providers/actor_videos_provider.dart';
 import '../../core/utils/responsive_helper.dart';
+import '../../core/utils/orientation_helper.dart';
 import '../widgets/video_preview_dialog.dart';
 import '../../core/utils/navigation_manager.dart';
 
@@ -45,6 +47,10 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   int _selectedRecommendationIndex = 0;
   List<VideoListItem> _recommendations = [];
   final NavigationManager _navigationManager = NavigationManager();
+  
+  // 方向控制提示
+  bool _showOrientationHint = false;
+  Timer? _orientationHintTimer;
 
   @override
   void initState() {
@@ -58,6 +64,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
   void dispose() {
     _videoPlayerController?.dispose();
     _chewieController?.dispose();
+    _orientationHintTimer?.cancel();
     super.dispose();
   }
 
@@ -95,6 +102,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       _volume = (_volume + _volumeStep).clamp(0.0, 1.0);
       _videoPlayerController!.setVolume(_volume);
       setState(() {});
+      _showOrientationHint();
     }
   }
 
@@ -103,6 +111,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       _volume = (_volume - _volumeStep).clamp(0.0, 1.0);
       _videoPlayerController!.setVolume(_volume);
       setState(() {});
+      _showOrientationHint();
     }
   }
 
@@ -112,6 +121,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       final currentPosition = _videoPlayerController!.value.position;
       final newPosition = currentPosition + _seekStep;
       _videoPlayerController!.seekTo(newPosition);
+      _showOrientationHint();
     }
   }
 
@@ -120,6 +130,7 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       final currentPosition = _videoPlayerController!.value.position;
       final newPosition = currentPosition - _seekStep;
       _videoPlayerController!.seekTo(newPosition);
+      _showOrientationHint();
     }
   }
 
@@ -138,6 +149,22 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
       final newPosition = currentPosition - _fastSeekStep;
       _videoPlayerController!.seekTo(newPosition);
     }
+  }
+
+  // 顯示方向控制提示
+  void _showOrientationHint() {
+    setState(() {
+      _showOrientationHint = true;
+    });
+    
+    _orientationHintTimer?.cancel();
+    _orientationHintTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _showOrientationHint = false;
+        });
+      }
+    });
   }
 
   // 選擇推薦影片
@@ -398,20 +425,28 @@ class _PlayerPageState extends ConsumerState<PlayerPage> {
                                       });
                                     }
                                   },
-                                  onVerticalDragUpdate: (details) {
-                                    // 上下滑動控制音量
-                                    if (details.delta.dy < -10) {
-                                      _increaseVolume();
-                                    } else if (details.delta.dy > 10) {
-                                      _decreaseVolume();
-                                    }
-                                  },
-                                  onHorizontalDragUpdate: (details) {
-                                    // 左右滑動控制播放進度
-                                    if (details.delta.dx > 10) {
-                                      _seekForward();
-                                    } else if (details.delta.dx < -10) {
-                                      _seekBackward();
+                                  onPanUpdate: (details) {
+                                    // 智能方向控制：根據螢幕方向適配手勢
+                                    final action = OrientationHelper.getGestureAction(
+                                      context,
+                                      details.delta.dx,
+                                      details.delta.dy,
+                                    );
+                                    
+                                    // 執行對應的動作
+                                    switch (action) {
+                                      case GestureAction.increaseVolume:
+                                        _increaseVolume();
+                                        break;
+                                      case GestureAction.decreaseVolume:
+                                        _decreaseVolume();
+                                        break;
+                                      case GestureAction.seekForward:
+                                        _seekForward();
+                                        break;
+                                      case GestureAction.seekBackward:
+                                        _seekBackward();
+                                        break;
                                     }
                                   },
                                   child: Chewie(controller: _chewieController!),
